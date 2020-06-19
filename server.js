@@ -216,7 +216,7 @@ app.post('/cancel-subscription', async (req, res) => {
         plrID: cancelledSubscription.plrID,
         subscriptionName: cancelledSubscription.subscriptionName,
         Cancelled: cancelledSubscription.Cancelled,
-        validTill: cancelledSubscription.validTill
+        validTill: new Date(cancelledSubscription.validTill).toDateString()
     })
 })
 
