@@ -51,7 +51,70 @@ app.use(async (req, res, next) => {
 require('./models/SubscriptionCreator')
 const creatorModel = mongoose.model('SubscriptionCreator')
 
-const creatorFound = await creatorModel.findOne({ gameID: req.body.gameID })
+if (req.method === "POST") {
+    const creatorFound = await creatorModel.findOne({ gameID: req.body.gameID })
+
+if (creatorFound) {
+    const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
+    const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':')
+
+    if (login && password && login === creatorFound.Username && password === creatorFound.Password) {
+        return next()
+    }
+
+    res.set('WWW-Authenticate', 'Basic realm="401"')
+    res.status(401).send('Authentication required.')
+} else {
+    const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
+    const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':')
+
+    if (!login || !password) {
+        res.set('WWW-Authenticate', 'Basic realm="401"')
+        res.status(401).send('Authentication required.')
+        return;
+    }
+
+    const newCreatorInstance = new creatorModel({
+        gameID: req.body.gameID,
+        Username: login,
+        Password: password,
+        SubscriptionIds: []
+    })
+
+    await newCreatorInstance.save()
+
+    require('./models/Subscription')
+    const subscriptionModel = mongoose.model('Subscription')
+
+    agenda.define('update subscriptions', {priority: 'high', concurrency: 10}, async job => {
+        const { gameID } = job.attrs.data;
+        var subscriptionIDArray = []
+
+        await creatorModel.findOne({ gameID: gameID }, async (err, res) => {
+            subscriptionIDArray = [...res.SubscriptionIds]
+        })
+
+        subscriptionIDArray.forEach(async subscription => {
+            var newDate = new Date();
+            var currentTime = newDate.getTime()
+
+            if (currentTime > subscription.validTill && subscription.Cancelled === false) {
+                await subscriptionModel.findByIdAndUpdate(subscription._id, {$set: { Valid: false } })
+            } else {
+                return ;
+            }
+        });
+    });
+
+    (async function() {
+        await agenda.start();   
+        await agenda.every('1 hour', 'update subscriptions', { gameID: req.body.gameID }, { skipImmediate: true });
+    })();
+
+    return next()
+}
+} else {
+    const creatorFound = await creatorModel.findOne({ gameID: req.params.gameID })
 
     if (creatorFound) {
         const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
@@ -74,7 +137,7 @@ const creatorFound = await creatorModel.findOne({ gameID: req.body.gameID })
         }
 
         const newCreatorInstance = new creatorModel({
-            gameID: req.body.gameID,
+            gameID: req.params.gameID,
             Username: login,
             Password: password,
             SubscriptionIds: []
@@ -107,11 +170,12 @@ const creatorFound = await creatorModel.findOne({ gameID: req.body.gameID })
 
         (async function() {
             await agenda.start();   
-            await agenda.every('1 hour', 'update subscriptions', { gameID: req.body.gameID }, { skipImmediate: true });
+            await agenda.every('1 hour', 'update subscriptions', { gameID: req.params.gameID }, { skipImmediate: true });
         })();
 
         return next()
     }
+}
 })
 
 app.post("/create-subscription", async (req, res) => {
