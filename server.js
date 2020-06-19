@@ -164,8 +164,8 @@ app.post("/create-subscription", async (req, res) => {
     } catch (e) {
         res.json({
             plrID: receivedData.plrID,
-            validTill: nowDate,
-            valid: true,
+            validTill: null,
+            valid: false,
             failResponse: `An Error Prevented The Subscription from Being Created: ${e}`
         })
     }
@@ -205,7 +205,7 @@ app.post('/cancel-subscription', async (req, res) => {
     res.json({
         plrID: cancelledSubscription.plrID,
         subscriptionName: cancelledSubscription.subscriptionName,
-        Cancelled: cancelledSubscription.Cancelled,
+        Cancelled: true,
         validTill: new Date(cancelledSubscription.validTill).toDateString()
     })
 })
