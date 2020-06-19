@@ -137,7 +137,7 @@ app.post("/create-subscription", async (req, res) => {
             const newSubscriptionInstance = new subscriptionModel({
                 plrID: receivedData.plrID,
                 subscriptionName: receivedData.subscriptionName,
-                validTill: someDate.getTime(),
+                validTill: someDate.toDateString(),
                 gameID: receivedData.gameID,
                 Cancelled: false,
                 Valid: true
