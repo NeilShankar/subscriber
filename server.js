@@ -18,9 +18,7 @@ app.use(
 
 app.use(bodyParser.json());
 
-const mongoURI = "mongodb+srv://subscriptionCreator:v276YdMKEh9nTB7F@cluster0-nwcym.gcp.mongodb.net/subscriptionStore?retryWrites=true&w=majority"
-
-mongoose.connect(mongoURI, {useNewUrlParser: true,  useUnifiedTopology: true, useFindAndModify: false });
+mongoose.connect(`${process.env.MONGO_DB_URI}`, {useNewUrlParser: true,  useUnifiedTopology: true, useFindAndModify: false });
 
 var db = mongoose.connection;
 
@@ -30,7 +28,7 @@ db.once("open", function() {
 console.log("Connection To MongoDB Atlas Successful!");
 });
 
-const mongoConnectionString = 'mongodb+srv://subscriptionCreator:v276YdMKEh9nTB7F@cluster0-nwcym.gcp.mongodb.net/subscriptionStore?retryWrites=true&w=majority';
+const mongoConnectionString = `${process.env.MONGO_DB_URI}`;
  
 const agenda = new Agenda({db: {address: mongoConnectionString}});
 
