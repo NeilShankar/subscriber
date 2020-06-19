@@ -137,7 +137,7 @@ app.post("/create-subscription", async (req, res) => {
             const newSubscriptionInstance = new subscriptionModel({
                 plrID: receivedData.plrID,
                 subscriptionName: receivedData.subscriptionName,
-                validTill: someDate.toDateString(),
+                validTill: someDate.getTime(),
                 gameID: receivedData.gameID,
                 Cancelled: false,
                 Valid: true
@@ -154,11 +154,10 @@ app.post("/create-subscription", async (req, res) => {
         var nowDate = new Date();
         var addDays = receivedData.validDays;
         nowDate.setDate(nowDate.getDate() + addDays);
-        nowDate.toDateString()
 
         res.json({
             plrID: receivedData.plrID,
-            validTill: nowDate,
+            validTill: nowDate.toDateString(),
             valid: true,
             failResponse: "Faced No Errors"
         })
